@@ -12,12 +12,12 @@
 						required>
 				</div>
 				<button type="submit">
-					Buscar
+					Adicionar
 				</button>
 			</form>
-			<div v-if="channel">
+			<div v-if="feeds">
 				<div
-					v-for="item in channel.item"
+					v-for="{ origin, item } in feeds"
 					id="item"
 					:key="item.guid">
 					<div class="itemHeader">
@@ -33,7 +33,10 @@
 					</div>
 					<div class="itemDetails">
 						<NcChip :text="item.category" no-close variant="primary" />
-						<span class="caption">{{ new Date(item.pubDate).toLocaleString() }}</span>
+						<div>
+							<span class="caption">{{ origin }}</span>
+							<span class="caption">{{ new Date(item.pubDate).toLocaleString() }}</span>
+						</div>
 					</div>
 				</div>
 			</div>
@@ -51,6 +54,7 @@ import OpenInNew from 'vue-material-design-icons/OpenInNew.vue'
 
 import axios from '@nextcloud/axios'
 import { generateOcsUrl } from '@nextcloud/router'
+import { loadState } from '@nextcloud/initial-state'
 
 export default {
 	name: 'App',
@@ -64,18 +68,16 @@ export default {
 	data() {
 		return {
 			url: '',
-			channel: null,
+			feeds: loadState('rsrss', 'feeds'),
 		}
 	},
 	methods: {
 		async fetchFeed() {
-			const { data } = await axios.get(generateOcsUrl('apps/rsrss/api'), {
-				params: {
-					url: this.url,
-				},
+			const { data } = await axios.post(generateOcsUrl('apps/rsrss/api'), {
+				url: this.url,
 			})
 
-			this.channel = data.ocs.data.feed.channel
+			this.feeds = data.ocs.data.feed
 		},
 	},
 }
@@ -114,6 +116,8 @@ export default {
 .caption {
 	font-size: 10pt;
 	color: gray;
+	display: block;
+	text-align: right;
 }
 
 #item + #item {
